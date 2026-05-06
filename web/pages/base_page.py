@@ -34,6 +34,8 @@ class BasePage:
         element = self.visible(locator)
         element.clear()
         element.send_keys(text)
+        actual = element.get_attribute("value")
+        print(f"[debug] type {locator} sent='{text}' value='{actual}'")
 
     def text_of(self, locator) -> str:
         return self.visible(locator).text
