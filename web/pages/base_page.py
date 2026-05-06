@@ -32,10 +32,20 @@ class BasePage:
 
     def type(self, locator, text: str) -> None:
         element = self.visible(locator)
-        element.clear()
-        element.send_keys(text)
-        actual = element.get_attribute("value")
-        print(f"[debug] type {locator} sent='{text}' value='{actual}'")
+        self.driver.execute_script(
+            """
+            const el = arguments[0];
+            const value = arguments[1];
+            const setter = Object.getOwnPropertyDescriptor(
+                window.HTMLInputElement.prototype, 'value'
+            ).set;
+            setter.call(el, value);
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            """,
+            element,
+            text,
+        )
 
     def text_of(self, locator) -> str:
         return self.visible(locator).text
