@@ -36,7 +36,7 @@ unified-test-automation/
 │   └── tests/                    # test_pet, test_store, test_user (18 testes)
 ├── web/
 │   ├── utils/driver_factory.py   # Chrome headless com opções para CI
-│   ├── conftest.py               # fixture driver (lê HEADLESS env)
+│   ├── conftest.py               # fixture driver + screenshot em falha
 │   ├── pages/                    # POM: base/login/inventory/cart/checkout
 │   └── tests/test_checkout_e2e.py
 ├── pytest.ini                    # markers: api, web, smoke
@@ -109,6 +109,18 @@ Asserções intermediárias em cada etapa do fluxo principal — falha aponta o 
 
 ---
 
+## Decisões técnicas (Web)
+
+SauceDemo é uma SPA React. Em Chrome headless, alguns padrões de Selenium "puro" se mostraram instáveis e foram resolvidos com pequenos desvios documentados aqui:
+
+- **`BasePage.click()` vs `BasePage.js_click()`** — o click nativo do Selenium é o padrão e funciona para a maioria dos elementos. Para botões/links com handler React (cart link `<a>` sem `href`, botão Add to cart, Checkout, Continue, Finish), o click nativo às vezes registra como no-op em headless. `js_click()` dispara `element.click()` via `execute_script`, contornando problemas de coordenada e re-render do React.
+- **`BasePage.type()` com setter nativo do `HTMLInputElement`** — `send_keys` engolia silenciosamente as teclas nos inputs do `Checkout: Your Information` (mesmo Selenium funcionando perfeitamente nos inputs de login). A solução padrão para inputs controlados por React é setar o `value` pelo setter do prototype (`Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set`) e disparar `input` + `change` events, garantindo que o estado React seja atualizado.
+- **`wait_for_url()` após cada navegação** — todas as transições de página esperam explicitamente a mudança de URL antes do próximo passo, eliminando race conditions onde o teste age antes do React montar a próxima página.
+- **`wait_for_remove_button()` após cada add to cart** — confirma de forma determinística que o clique registrou (botão muda de "Add to cart" para "Remove"), em vez de checar o badge do carrinho que atualiza com leve atraso.
+- **Screenshot + URL/title em falha** — fixture `driver` em `web/conftest.py` salva print da tela em `screenshots/` quando um teste falha. O CI sobe esses prints como artifact `web-screenshots`.
+
+---
+
 ## CI/CD
 
 Pipeline definida em `.github/workflows/ci.yml` com **2 jobs paralelos**:
@@ -116,7 +128,7 @@ Pipeline definida em `.github/workflows/ci.yml` com **2 jobs paralelos**:
 - `api-tests` — Python 3.11 + `pytest -m api`
 - `web-tests` — Python 3.11 + Chrome stable + `pytest -m web`
 
-Roda em `push` e `pull_request` para `main`. Cada job sobe um relatório HTML como artifact (`api-report` / `web-report`) que pode ser baixado da página da execução.
+Roda em `push` e `pull_request` para `main`. Cada job sobe um relatório HTML como artifact (`api-report` / `web-report`). Em falha do job web, screenshots são salvos no artifact `web-screenshots` para diagnóstico.
 
 Acompanhe em: <https://github.com/AlexandreCavalcantee/unified-test-automation/actions>
 
