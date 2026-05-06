@@ -23,7 +23,8 @@ class InventoryPage(BasePage):
         return self
 
     def add_to_cart(self, item_name: str) -> "InventoryPage":
-        self.click(self._add_button_for(item_name))
+        button = self.clickable(self._add_button_for(item_name))
+        self.driver.execute_script("arguments[0].click();", button)
         self.present(self._remove_button_for(item_name))
         return self
 
