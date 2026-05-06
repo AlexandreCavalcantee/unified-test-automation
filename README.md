@@ -144,12 +144,23 @@ Acompanhe em: <https://github.com/AlexandreCavalcantee/unified-test-automation/a
 
 ## Prints do funcionamento
 
-Coloque os screenshots em `assets/` e referencie aqui:
+### Pipeline verde no GitHub Actions
 
-```markdown
 ![CI verde](assets/ci.png)
+
+### Relatório HTML — API (Petstore, 23 testes)
+
 ![API report](assets/api-report.png)
+
+### Relatório HTML — Web (SauceDemo, 16 testes)
+
 ![Web report](assets/web-report.png)
+
+### Como gerar os relatórios localmente
+
+```bash
+pytest -m api --html=api-report.html --self-contained-html
+pytest -m web --html=web-report.html --self-contained-html
 ```
 
-> `assets/` está no `.gitignore` por padrão. Para versionar prints, remova essa linha do `.gitignore` ou adicione cada arquivo individualmente com `git add -f assets/<arquivo>`.
+Abra os `.html` no navegador e capture os prints em `assets/` com os nomes acima (`ci.png`, `api-report.png`, `web-report.png`).
