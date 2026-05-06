@@ -14,8 +14,14 @@ class BasePage:
     def visible(self, locator) -> WebElement:
         return self.wait.until(ec.visibility_of_element_located(locator))
 
+    def present(self, locator) -> WebElement:
+        return self.wait.until(ec.presence_of_element_located(locator))
+
     def clickable(self, locator) -> WebElement:
         return self.wait.until(ec.element_to_be_clickable(locator))
+
+    def wait_for_url(self, fragment: str) -> None:
+        self.wait.until(ec.url_contains(fragment))
 
     def click(self, locator) -> None:
         self.clickable(locator).click()

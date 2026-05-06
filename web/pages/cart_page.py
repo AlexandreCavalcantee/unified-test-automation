@@ -9,7 +9,7 @@ class CartPage(BasePage):
     CHECKOUT_BUTTON = (By.ID, "checkout")
 
     def loaded(self) -> "CartPage":
-        self.visible(self.CART_ITEM)
+        self.present(self.CART_ITEM)
         return self
 
     def item_names(self) -> list[str]:

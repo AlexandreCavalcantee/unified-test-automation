@@ -26,3 +26,4 @@ class InventoryPage(BasePage):
 
     def open_cart(self) -> None:
         self.click(self.CART_LINK)
+        self.wait_for_url("/cart.html")
