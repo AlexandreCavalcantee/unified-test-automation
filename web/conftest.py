@@ -24,4 +24,6 @@ def driver(request):
         instance.save_screenshot(f"screenshots/{name}.png")
         print(f"\n[debug] url={instance.current_url}")
         print(f"[debug] title={instance.title}")
+    if os.getenv("KEEP_OPEN", "false").lower() == "true":
+        input("\n[KEEP_OPEN] press Enter to close the browser... ")
     instance.quit()
