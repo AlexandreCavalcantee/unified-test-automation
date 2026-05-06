@@ -15,11 +15,13 @@ class CheckoutPage(BasePage):
         self.type(self.FIRST_NAME, first)
         self.type(self.LAST_NAME, last)
         self.type(self.POSTAL_CODE, postal)
-        self.click(self.CONTINUE_BUTTON)
+        self.js_click(self.CONTINUE_BUTTON)
+        self.wait_for_url("checkout-step-two.html")
         return self
 
     def finish(self) -> None:
-        self.click(self.FINISH_BUTTON)
+        self.js_click(self.FINISH_BUTTON)
+        self.wait_for_url("checkout-complete.html")
 
     def success_message(self) -> str:
         return self.text_of(self.SUCCESS_HEADER)
