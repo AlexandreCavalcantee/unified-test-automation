@@ -1,5 +1,7 @@
 # unified-test-automation
 
+https://github.com/AlexandreCavalcantee/unified-test-automation
+
 [![CI](https://github.com/AlexandreCavalcantee/unified-test-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexandreCavalcantee/unified-test-automation/actions/workflows/ci.yml)
 
 Projeto unificado de automação de testes cobrindo dois cenários:
