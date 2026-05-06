@@ -1,6 +1,7 @@
 import pytest
 
 from api.data.payloads import pet_payload
+from api.data.schemas import PET_SCHEMA, assert_schema
 
 pytestmark = pytest.mark.api
 
@@ -14,6 +15,7 @@ class TestPet:
     def test_create_pet(self, client, unique_id):
         body = self._create(client, unique_id)
 
+        assert_schema(body, PET_SCHEMA)
         assert body["id"] == unique_id
         assert body["name"] == "Rex"
         assert body["status"] == "available"
@@ -62,3 +64,32 @@ class TestPet:
         response = client.get("/pet/0")
 
         assert response.status_code == 404
+
+    def test_find_by_tags(self, client, unique_id):
+        self._create(client, unique_id)
+
+        response = client.get("/pet/findByTags", params={"tags": "friendly"})
+
+        assert response.status_code == 200
+        pets = response.json()
+        assert isinstance(pets, list)
+        assert all(
+            any(t.get("name") == "friendly" for t in p.get("tags", []))
+            for p in pets
+        )
+
+    def test_create_pet_with_invalid_payload_is_rejected(self, client):
+        response = client.post("/pet", json={"id": "not-an-integer", "name": 123})
+
+        assert response.status_code >= 400
+
+    def test_delete_pet_is_idempotent_returns_404_on_second_call(
+        self, client, unique_id
+    ):
+        self._create(client, unique_id)
+
+        first = client.delete(f"/pet/{unique_id}")
+        assert first.status_code == 200
+
+        second = client.delete(f"/pet/{unique_id}")
+        assert second.status_code == 404

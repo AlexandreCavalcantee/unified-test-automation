@@ -35,12 +35,13 @@ unified-test-automation/
 │   ├── client.py                 # PetstoreClient (wrapper de requests.Session)
 │   ├── conftest.py               # fixtures: client, unique_id
 │   ├── data/payloads.py          # factories: pet_payload, order_payload, user_payload
-│   └── tests/                    # test_pet, test_store, test_user (18 testes)
+│   ├── data/schemas.py           # JSON schemas + assert_schema helper
+│   └── tests/                    # test_pet, test_store, test_user (23 testes)
 ├── web/
 │   ├── utils/driver_factory.py   # Chrome headless com opções para CI
 │   ├── conftest.py               # fixture driver + screenshot em falha
-│   ├── pages/                    # POM: base/login/inventory/cart/checkout
-│   └── tests/test_checkout_e2e.py
+│   ├── pages/                    # POM: base/login/inventory/cart/checkout/side_menu
+│   └── tests/                    # checkout_e2e, cart, sort, validation, logout, images (16 testes)
 ├── pytest.ini                    # markers: api, web, smoke
 └── requirements.txt
 ```
@@ -89,23 +90,28 @@ pytest --html=report.html --self-contained-html
 
 ## Estratégia de testes
 
-### API — Petstore (18 cenários)
+### API — Petstore (23 cenários)
 
 | Endpoint | Cobertura |
 |---|---|
-| **Pet** (6 testes) | criar, buscar por ID, atualizar, listar por status, deletar, 404 em ID inexistente |
-| **Store** (5 testes) | criar pedido, buscar pedido, deletar pedido, inventário, 404 em ID inválido |
-| **User** (7 testes) | criar, buscar, atualizar, login, logout, batch via createWithList, deletar |
+| **Pet** (9 testes) | criar, buscar por ID, atualizar, listar por status, listar por tag, deletar, idempotência de DELETE, 404 em ID inexistente, payload inválido |
+| **Store** (6 testes) | criar pedido, buscar pedido, deletar pedido, inventário, 404 em ID inválido, payload inválido |
+| **User** (8 testes) | criar, buscar, atualizar, login, logout, batch via createWithList, deletar, 404 em usuário inexistente |
+
+Além de asserções de campo, respostas dos endpoints `/pet`, `/store/order` e `/user/{username}` são validadas contra **JSON Schemas** (`api/data/schemas.py`), garantindo o contrato e não só o comportamento.
 
 Cada teste isola seus dados via fixture `unique_id` (timestamp em ms) — Petstore é mock e não limpa estado entre runs, então reutilizar IDs causa flakiness.
 
-### Web — SauceDemo (3 cenários)
+### Web — SauceDemo (16 cenários)
 
-| Cenário | O que valida |
+| Arquivo | O que valida |
 |---|---|
-| `test_full_checkout_flow_succeeds` | Login → adiciona 2 produtos → abre carrinho → confere itens → preenche dados → finaliza → asserta mensagem de sucesso |
-| `test_login_with_locked_user_shows_error` | Mensagem de "locked out" com `locked_out_user` |
-| `test_login_with_invalid_credentials_shows_error` | Mensagem de credenciais inválidas |
+| `test_checkout_e2e.py` | Fluxo completo de checkout + erros de login (locked_out_user, credenciais inválidas) |
+| `test_cart.py` | Remover item via inventory (limpa o badge) e remover via página do carrinho |
+| `test_inventory_sort.py` | Ordenação A→Z, Z→A, preço asc, preço desc |
+| `test_checkout_validation.py` | Campos obrigatórios (nome, sobrenome, CEP) + cancelar no step-one volta ao carrinho |
+| `test_logout.py` | Logout pelo menu lateral retorna à tela de login |
+| `test_inventory_images.py` | `standard_user` exibe 6 imagens distintas; `problem_user` reproduz o bug de imagens duplicadas (regressão) |
 
 Asserções intermediárias em cada etapa do fluxo principal — falha aponta o passo exato que quebrou, não só o resultado final.
 

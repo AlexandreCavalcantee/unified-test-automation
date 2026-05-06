@@ -1,6 +1,7 @@
 import pytest
 
 from api.data.payloads import user_payload
+from api.data.schemas import USER_SCHEMA, assert_schema
 
 pytestmark = pytest.mark.api
 
@@ -27,6 +28,7 @@ class TestUser:
 
         assert response.status_code == 200
         body = response.json()
+        assert_schema(body, USER_SCHEMA)
         assert body["username"] == username
         assert body["email"] == f"{username}@example.com"
 
@@ -80,3 +82,8 @@ class TestUser:
 
         get_response = client.get(f"/user/{username}")
         assert get_response.status_code == 404
+
+    def test_get_nonexistent_user_returns_404(self, client, unique_id):
+        response = client.get(f"/user/ghost_{unique_id}")
+
+        assert response.status_code == 404

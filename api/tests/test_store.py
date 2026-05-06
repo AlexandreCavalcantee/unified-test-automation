@@ -1,6 +1,7 @@
 import pytest
 
 from api.data.payloads import order_payload, pet_payload
+from api.data.schemas import ORDER_SCHEMA, assert_schema
 
 pytestmark = pytest.mark.api
 
@@ -23,6 +24,7 @@ class TestStore:
 
         body = self._place_order(client, unique_id, pet["id"])
 
+        assert_schema(body, ORDER_SCHEMA)
         assert body["id"] == unique_id
         assert body["petId"] == pet["id"]
         assert body["quantity"] == 1
@@ -60,3 +62,10 @@ class TestStore:
         response = client.get("/store/order/0")
 
         assert response.status_code == 404
+
+    def test_place_order_with_invalid_payload_is_rejected(self, client):
+        response = client.post(
+            "/store/order", json={"id": "abc", "petId": "xyz", "quantity": "many"}
+        )
+
+        assert response.status_code >= 400
