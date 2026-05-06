@@ -1,1 +1,135 @@
 # unified-test-automation
+
+[![CI](https://github.com/AlexandreCavalcantee/unified-test-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexandreCavalcantee/unified-test-automation/actions/workflows/ci.yml)
+
+Projeto unificado de automação de testes cobrindo dois cenários:
+
+- **API** — Swagger Petstore (`https://petstore.swagger.io/v2`), endpoints **Pet**, **Store** e **User**.
+- **Web** — SauceDemo (`https://www.saucedemo.com/`), fluxo E2E de login → carrinho → checkout.
+
+Ambas as suítes rodam em uma única pipeline de CI no GitHub Actions.
+
+---
+
+## Tecnologias
+
+| Camada | Stack |
+|---|---|
+| Linguagem | Python 3.11 |
+| Test runner | pytest 8 + pytest-html |
+| API client | requests + jsonschema |
+| Web automation | Selenium 4 (Selenium Manager nativo, sem driver manual) |
+| Padrões | Page Object Model, Factories de payload |
+| CI | GitHub Actions (2 jobs paralelos) |
+
+---
+
+## Estrutura
+
+```
+unified-test-automation/
+├── .github/workflows/ci.yml      # pipeline com jobs api-tests e web-tests
+├── api/
+│   ├── client.py                 # PetstoreClient (wrapper de requests.Session)
+│   ├── conftest.py               # fixtures: client, unique_id
+│   ├── data/payloads.py          # factories: pet_payload, order_payload, user_payload
+│   └── tests/                    # test_pet, test_store, test_user (18 testes)
+├── web/
+│   ├── utils/driver_factory.py   # Chrome headless com opções para CI
+│   ├── conftest.py               # fixture driver (lê HEADLESS env)
+│   ├── pages/                    # POM: base/login/inventory/cart/checkout
+│   └── tests/test_checkout_e2e.py
+├── pytest.ini                    # markers: api, web, smoke
+└── requirements.txt
+```
+
+---
+
+## Pré-requisitos
+
+- Python 3.11+
+- Google Chrome (para os testes web)
+
+---
+
+## Instalação
+
+```bash
+git clone https://github.com/AlexandreCavalcantee/unified-test-automation.git
+cd unified-test-automation
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+---
+
+## Execução
+
+```bash
+# Toda a suíte
+pytest
+
+# Só API (Petstore)
+pytest -m api
+
+# Só Web (SauceDemo)
+pytest -m web
+
+# Web com browser visível (debug local)
+HEADLESS=false pytest -m web
+
+# Gerar relatório HTML
+pytest --html=report.html --self-contained-html
+```
+
+---
+
+## Estratégia de testes
+
+### API — Petstore (18 cenários)
+
+| Endpoint | Cobertura |
+|---|---|
+| **Pet** (6 testes) | criar, buscar por ID, atualizar, listar por status, deletar, 404 em ID inexistente |
+| **Store** (5 testes) | criar pedido, buscar pedido, deletar pedido, inventário, 404 em ID inválido |
+| **User** (7 testes) | criar, buscar, atualizar, login, logout, batch via createWithList, deletar |
+
+Cada teste isola seus dados via fixture `unique_id` (timestamp em ms) — Petstore é mock e não limpa estado entre runs, então reutilizar IDs causa flakiness.
+
+### Web — SauceDemo (3 cenários)
+
+| Cenário | O que valida |
+|---|---|
+| `test_full_checkout_flow_succeeds` | Login → adiciona 2 produtos → abre carrinho → confere itens → preenche dados → finaliza → asserta mensagem de sucesso |
+| `test_login_with_locked_user_shows_error` | Mensagem de "locked out" com `locked_out_user` |
+| `test_login_with_invalid_credentials_shows_error` | Mensagem de credenciais inválidas |
+
+Asserções intermediárias em cada etapa do fluxo principal — falha aponta o passo exato que quebrou, não só o resultado final.
+
+---
+
+## CI/CD
+
+Pipeline definida em `.github/workflows/ci.yml` com **2 jobs paralelos**:
+
+- `api-tests` — Python 3.11 + `pytest -m api`
+- `web-tests` — Python 3.11 + Chrome stable + `pytest -m web`
+
+Roda em `push` e `pull_request` para `main`. Cada job sobe um relatório HTML como artifact (`api-report` / `web-report`) que pode ser baixado da página da execução.
+
+Acompanhe em: <https://github.com/AlexandreCavalcantee/unified-test-automation/actions>
+
+---
+
+## Prints do funcionamento
+
+Coloque os screenshots em `assets/` e referencie aqui:
+
+```markdown
+![CI verde](assets/ci.png)
+![API report](assets/api-report.png)
+![Web report](assets/web-report.png)
+```
+
+> `assets/` está no `.gitignore` por padrão. Para versionar prints, remova essa linha do `.gitignore` ou adicione cada arquivo individualmente com `git add -f assets/<arquivo>`.
