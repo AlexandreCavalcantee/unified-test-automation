@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -19,6 +20,9 @@ def build_driver(headless: bool = True) -> WebDriver:
     service = None
     if binary:
         options.binary_location = binary
+        options.add_argument(f"--user-data-dir={tempfile.mkdtemp(prefix='wd-profile-')}")
+        options.add_argument("--no-first-run")
+        options.add_argument("--no-default-browser-check")
         service = Service(service_args=["--disable-build-check"])
 
     driver = webdriver.Chrome(options=options, service=service)
