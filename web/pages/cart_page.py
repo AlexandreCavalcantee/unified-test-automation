@@ -16,4 +16,5 @@ class CartPage(BasePage):
         return [el.text for el in self.driver.find_elements(*self.ITEM_NAME)]
 
     def checkout(self) -> None:
-        self.click(self.CHECKOUT_BUTTON)
+        self.js_click(self.CHECKOUT_BUTTON)
+        self.wait_for_url("checkout-step-one.html")
