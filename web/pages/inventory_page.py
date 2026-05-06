@@ -5,7 +5,7 @@ from web.pages.base_page import BasePage
 
 class InventoryPage(BasePage):
     INVENTORY_LIST = (By.CSS_SELECTOR, ".inventory_list")
-    CART_LINK = (By.CSS_SELECTOR, ".shopping_cart_link")
+    CART_LINK = (By.CSS_SELECTOR, "[data-test='shopping-cart-link']")
     CART_BADGE = (By.CSS_SELECTOR, ".shopping_cart_badge")
 
     @staticmethod
@@ -31,5 +31,6 @@ class InventoryPage(BasePage):
         return int(self.text_of(self.CART_BADGE))
 
     def open_cart(self) -> None:
-        self.click(self.CART_LINK)
-        self.wait_for_url("/cart.html")
+        link = self.clickable(self.CART_LINK)
+        self.driver.execute_script("arguments[0].click();", link)
+        self.wait_for_url("cart.html")
