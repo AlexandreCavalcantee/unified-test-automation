@@ -23,8 +23,7 @@ class InventoryPage(BasePage):
         return self
 
     def add_to_cart(self, item_name: str) -> "InventoryPage":
-        button = self.clickable(self._add_button_for(item_name))
-        self.driver.execute_script("arguments[0].click();", button)
+        self.click(self._add_button_for(item_name))
         self.present(self._remove_button_for(item_name))
         return self
 
@@ -32,6 +31,5 @@ class InventoryPage(BasePage):
         return int(self.text_of(self.CART_BADGE))
 
     def open_cart(self) -> None:
-        link = self.clickable(self.CART_LINK)
-        self.driver.execute_script("arguments[0].click();", link)
+        self.click(self.CART_LINK)
         self.wait_for_url("cart.html")

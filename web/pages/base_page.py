@@ -24,7 +24,8 @@ class BasePage:
         self.wait.until(ec.url_contains(fragment))
 
     def click(self, locator) -> None:
-        self.clickable(locator).click()
+        element = self.clickable(locator)
+        self.driver.execute_script("arguments[0].click();", element)
 
     def type(self, locator, text: str) -> None:
         element = self.visible(locator)
