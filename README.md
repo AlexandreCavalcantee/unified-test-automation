@@ -140,25 +140,38 @@ Acompanhe em: <https://github.com/AlexandreCavalcantee/unified-test-automation/a
 
 ---
 
-## Prints do funcionamento
+## Evidências de execução
 
-### Pipeline verde no GitHub Actions
+Provas visuais de que as duas suítes rodam localmente **e** na pipeline de CI — cobrindo os dois ambientes em que os testes precisam funcionar.
 
-![CI verde](assets/ci.png)
+### 1. Execução local
 
-### Relatório HTML — API (Petstore, 23 testes)
+#### API — `pytest -m api` (23/23 verdes em ~9s)
 
-![API report](assets/api-report.png)
+![Execução local da suíte de API](assets/api-tests-run.jpeg)
 
-### Relatório HTML — Web (SauceDemo, 16 testes)
+Saída do `pytest` rodando os 23 cenários da Petstore (Pet, Store, User) com seleção via marker `api`. Note o `16 deselected` — só os testes de API foram executados, confirmando que os markers (`api` / `web`) estão isolando corretamente as suítes.
 
-![Web report](assets/web-report.png)
+#### Web — `pytest -m web` (16/16 verdes em ~24s)
 
-### Como gerar os relatórios localmente
+![Execução local da suíte Web](assets/web-tests-run.jpeg)
 
-```bash
-pytest -m api --html=api-report.html --self-contained-html
-pytest -m web --html=web-report.html --self-contained-html
-```
+Os 16 cenários da SauceDemo cobrindo checkout E2E, validações, ordenação, carrinho, logout e o teste de regressão de imagens duplicadas (`problem_user`). Tempo maior é esperado — o Selenium dirige o Chrome de verdade.
 
-Abra os `.html` no navegador e capture os prints em `assets/` com os nomes acima (`ci.png`, `api-report.png`, `web-report.png`).
+---
+
+### 2. CI/CD no GitHub Actions
+
+A pipeline (`.github/workflows/ci.yml`) executa **dois jobs em paralelo**, um para cada suíte:
+
+#### Job `API tests (Petstore)` — verde em 10s
+
+![Job de API no GitHub Actions](assets/ci-api-job.png)
+
+Steps de checkout, setup do Python 3.11, instalação de dependências, execução dos testes e upload do relatório HTML como artifact. Sem dependência de browser, o job é ágil.
+
+#### Job `Web tests (SauceDemo)` — verde em 47s
+
+![Job de Web no GitHub Actions](assets/ci-web-job.png)
+
+Mesmo fluxo do job de API + step `Set up Chrome` (Selenium Manager resolve o driver) e step extra `Upload screenshots on failure`, que sobe os prints da fixture de falha como artifact `web-screenshots` para diagnóstico pós-mortem.
