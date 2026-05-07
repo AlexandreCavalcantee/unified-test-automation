@@ -28,3 +28,6 @@ chromedriver.log
 screenshots/
 test-results/
 report.html
+
+# Claude Code (local settings)
+.claude/
